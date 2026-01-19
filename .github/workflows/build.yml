@@ -18,7 +18,7 @@ jobs:
         with:
           repository: xuxiaocheng0201/dfg
           token: ${{ secrets.GH_TOKEN }}
-          ref: 81d3580f39a4f7e180f654b05c86d351bd466bf1
+          ref: e84c533048f4fc41c0b60400d47eb6ba8859695b
 
       - name: Check rust version
         run: rustup --version
@@ -61,7 +61,9 @@ jobs:
 
       - name: Build release
         working-directory: ./dfg_ui
-        run: flutter build windows --release
+        run: |
+          rustup run stable cargo build --manifest-path ./rust/Cargo.toml -p rust_lib_dfg_ui --release --target x86_64-pc-windows-msvc --target-dir ./build/windows/x64/plugins/rust_lib_dfg_ui/cargokit_build
+          flutter build windows --release
 
       - name: Upload
         uses: actions/upload-artifact@v6
