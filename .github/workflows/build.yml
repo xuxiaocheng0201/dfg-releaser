@@ -7,7 +7,7 @@ on:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: full
-  GIT_REF: 6fb3eb8a12d17cdc46aa8d3d8245056fb77ae626
+  GIT_REF: 96e628743d3932999be7079ac5b1ed61629f093c
 
 jobs:
   build:
