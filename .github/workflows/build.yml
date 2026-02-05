@@ -7,7 +7,6 @@ on:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: full
-  GIT_REF: 5ff314a77144c7c8fed39c83faf6d49e1b5e1067
 
 jobs:
   build:
@@ -19,10 +18,19 @@ jobs:
         with:
           repository: xuxiaocheng0201/dfg
           token: ${{ secrets.GH_TOKEN }}
-          ref: ${{ env.GIT_REF }}
+          ref: f955c9244e8a7f4ec28a84791e5e3cd51c75f207
 
       - name: Check rust version
-        run: rustc --version
+        run: rustup --version
+
+      - name: Setup flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Check flutter version
+        run: flutter --version
 
       - name: Cache
         uses: actions/cache@v5
@@ -32,13 +40,32 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            ./target/
-          key: dfg-release-windows-x86_64
+            ./dfg_ui/rust/target/
+            ./dfg_ui/.dart_tool/
+            ./dfg_ui/build/
+          key: dfg-ui-release-windows-x86_64
 
-      - name: Build
-        run: cargo build --release
+      - name: Install cargo tools
+        uses: taiki-e/install-action@v2
+        with:
+          tool: flutter_rust_bridge_codegen@2.11.1,cargo-expand
+
+      - name: Generate code
+        working-directory: ./dfg_ui
+        run: |
+          flutter_rust_bridge_codegen integrate --no-enable-integration-test
+          git reset --hard
+          flutter pub get
+          flutter_rust_bridge_codegen generate
+          flutter create --platforms=windows .
+
+      - name: Build release
+        working-directory: ./dfg_ui
+        run: |
+          rustup run stable cargo build --manifest-path ./rust/Cargo.toml -p rust_lib_dfg_ui --release --target x86_64-pc-windows-msvc --target-dir ./build/windows/x64/plugins/rust_lib_dfg_ui/cargokit_build
+          flutter build windows --release
 
       - name: Upload
         uses: actions/upload-artifact@v6
         with:
-          path: target/release/dfg.exe
+          path: dfg_ui/build/windows/x64/runner/Release
